@@ -39,41 +39,49 @@ class Ship:
               self.new_event()
             else if self.combat:
               self.combat = False
+        return self
                
 
     def fire_laser(self, enemy):
         if (random.random() * (self.speed / enemy.speed)) > 0.1:
             enemy.take_shield_damage
+        return self, enemy
 
     def fire_missile(self, enemy):
         if ((random.random() * (self.speed / enemy.speed)) > 0.2:)
             enemy.take_shield_damage
+        return self, enemy
 
     def destroy(self, enemy):
         if(random.random() > 0.2):
             self.health += self.speed
+        return self
 
     def surrender_win(self, enemy):
         if(random.random() > 0.4):
             self.fuel += enemy.fuel
-        if(random.random() > 0.4):
+        if(random.random() > 0.8):
             self.health += 1
+        return self 
 
     def upgrade(self, attribute):
         if self.health > 1:
-            if attribute === self.energy || attribute === self.ammo:
+            if attribute === self.energy or attribute === self.ammo:
                 if self.energy + self.ammo === self.storage:
                     return
             self.health -= 1
             self.attribute += 1
+        return self
 
     def gain_attribute(self, attribute, amount):
         self.attribute += amount
+        return self
 
     def lose_attribute(self, attribute, amount):
         self.attribute -= amount
         if self.health < 1:
             self.destroy
+        return self
 
     def new_event(self):
         roll = random.random() * 100
@@ -98,29 +106,34 @@ class Ship:
 
         else if(roll >= 50):
             self.illness
-        else:
-            return
+        return self 
+            
 
 
 
 @app.route('/create_player')
 def CreatePlayer():
-    player = Ship(4,2,2,1,5,1,1,1)
-    request.session['player'] = player
-    return jsonify(player) 
+        player = Ship(4,2,2,1,5,1,1,1)
+        request.session['player'] = player
+        return jsonify(player) 
 
 @app.route('/')
 def index():
-    return render_template("index.html")
+        return render_template("index.html")
 
 @app.route('/move_ship')
 def move_ship(ship):
         ship.move()
         return jsonify(ship) 
 
-@app.route('fire_laser'):
+@app.route('laser')
 def fire_lasers(ship, target):
         ship.fire_laser(target)
         return jsonify(ship, target)
+
+@app.route('upgrade')
+def upgrade_ship(ship):
+        ship.upgrade()
+        return(ship)
 
 app.run(debug=True)
