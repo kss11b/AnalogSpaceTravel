@@ -18,7 +18,11 @@ class Ship:
         self.distance_travelled = 0
         self.surrendered = False
         self.combat = False
+        self.market = False
+        self.purchase_option = None
         self.turn_count = 0
+        self.message = ''
+        self.artifact = 0
 
     def take_ship_damage(self):
         if self.shield < 1:
@@ -33,6 +37,8 @@ class Ship:
 
     def move_ship(self):
         if self.fuel > 0:
+            if not self.health % 5:
+                self.health += 1
             self.fuel -= 1
             self.distance_travelled += 1
             if not self.combat:
@@ -40,7 +46,7 @@ class Ship:
             else if self.combat:
               self.combat = False
         return self
-               
+
 
     def fire_laser(self, enemy):
         if (random.random() * (self.speed / enemy.speed)) > 0.1:
@@ -62,31 +68,123 @@ class Ship:
             self.fuel += enemy.fuel
         if(random.random() > 0.8):
             self.health += 1
-        return self 
+        return self
 
-    def upgrade(self, attribute):
-        if self.health > 1:
-            if attribute === self.energy or attribute === self.ammo:
-                if self.energy + self.ammo === self.storage:
-                    return
+    def upgrade_storage(self):
             self.health -= 1
-            self.attribute += 1
+            self.storage += 1
         return self
 
-    def gain_attribute(self, attribute, amount):
-        self.attribute += amount
+    def upgrade_shield(self):
+            self.health -= 1
+            self.shield_max += 1
         return self
 
-    def lose_attribute(self, attribute, amount):
-        self.attribute -= amount
-        if self.health < 1:
-            self.destroy
+
+    def improve(self):
+        roll = random.random() * 100
+
+        if(roll >= 99):
+            self.health += 3
+
+        else if(roll >= 95):
+            self.storage += 2
+
+        else if(roll >= 90):
+            self.speed += 1
+
+        else if(roll >= 80):
+            self.ammo = (self.storage - self.energy)
+
+        else if(roll >= 60):
+             self.energy = (self.storage - self.ammo)
+
+        else if(roll >= 55):
+            self.shield = self.shield_max
+
+        else if(roll >= 50):
+            self.storage += 1
+        else:
+            self.fuel += 5
         return self
+
+    def find_wreckage(self):
+        roll = random.random() * 100
+
+        if(roll >= 99):
+            self.health += 3
+
+        else if(roll >= 95):
+            self.storage += 2
+
+        else if(roll >= 90):
+            self.speed += 1
+
+        else if(roll >= 80):
+            self.ammo = (self.storage - self.energy)
+
+        else if(roll >= 60):
+             self.energy = (self.storage - self.ammo)
+
+        else if(roll >= 55):
+            self.shield = self.shield_max
+
+        else if(roll >= 50):
+            self.storage += 1
+        else:
+            self.fuel += 5
+        return self
+
+    def find_trading_post(self):
+        self.market = True
+        roll = random.random() * 100
+
+        if(roll >= 99):
+            self.purchase_option = 'artifact'
+
+        else if(roll >= 90):
+            self.purchase_option = 'speed'
+
+        else if(roll >= 75):
+            self.purchase_option = 'storage'
+
+        else if(roll >= 60):
+            self.purchase_option = 'missile'
+
+        else if(roll >= 50):
+            self.purchase_option = 'shield'
+
+        else:
+            self.purchase_option = 'battery'
+
+        return self
+
+    def purchase(self):
+        if self.purchase_option == 'artifact':
+            self.health -= 1
+            self.artifact += 1
+        else if self.purchase_option == 'speed':
+            self.health -= 1
+            self.speed += 1
+        else if self.purchase_option == 'storage':
+            self.health -= 1
+            self.storage += 1
+        else if self.purchase_option == 'missile':
+            self.health -= 1
+            self.speed += 1
+        else if self.purchase_option == 'shield':
+            self.health -= 1
+            self.shield += 1
+        else if self.purchase_option == 'battery':
+            self.health -= 1
+            self.speed += 1
+        return self
+
 
     def new_event(self):
         roll = random.random() * 100
 
-        if(roll == 99):
+        if(roll >= 99):
             self.improve()
 
         else if(roll >= 95):
@@ -106,16 +204,16 @@ class Ship:
 
         else if(roll >= 50):
             self.illness
-        return self 
-            
+        return self
+
 
 
 
 @app.route('/create_player')
 def CreatePlayer():
         player = Ship(4,2,2,1,5,1,1,1)
-        request.session['player'] = player
-        return jsonify(player) 
+        # request.session['player'] = player
+        return jsonify(player)
 
 @app.route('/')
 def index():
@@ -124,14 +222,19 @@ def index():
 @app.route('/move_ship')
 def move_ship(ship):
         ship.move()
-        return jsonify(ship) 
+        return jsonify(ship)
 
-@app.route('laser')
-def fire_lasers(ship, target):
+@app.route('/laser')
+def fire_laser(ship, target):
         ship.fire_laser(target)
         return jsonify(ship, target)
 
-@app.route('upgrade')
+@app.route('/missile')
+def fire_missile(ship, target):
+        ship.fire_missile(target)
+        return jsonify(ship, target)
+
+@app.route('/upgrade')
 def upgrade_ship(ship):
         ship.upgrade()
         return(ship)
