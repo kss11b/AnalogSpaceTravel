@@ -4,25 +4,28 @@ app = Flask(__name__)
 app.secret_key = 'shushmans'
 
 
-# class Ship:
-#     def __init__(self, fuel, health, ammo, speed, energy, shield, energy_store, ammo_store, shield_max, storage, combat):
-#         self.fuel = fuel
-#         self.health = health
-#         self.ammo = ammo
-#         self.speed = speed
-#         self.energy = energy
-#         self.shield = shield
-#         self.storage = storage
-#         self.shield_max = shield_max
-#         self.distance_travelled = 0
-#         self.surrendered = False
-#         self.combat = combat
-#         self.market = False
-#         self.purchase_option = None
-#         self.turn_count = 0
-#         self.message = ''
-#         self.artifact = 0
-#         self.sight = False
+class Ship:
+    def __init__(self, fuel, health, ammo, speed, energy, shield, energy_store, ammo_store, shield_max, storage, combat):
+        self.fuel = fuel
+        self.health = health
+        self.ammo = ammo
+        self.speed = speed
+        self.energy = energy
+        self.shield = shield
+        self.storage = storage
+        self.shield_max = shield_max
+        self.distance_travelled = 0
+        self.surrendered = False
+        self.combat = combat
+        self.enemy = None
+        self.market = False
+        self.wreckage = False
+        self.purchase_option = None
+        self.turn_count = 0
+        self.message = ''
+        self.artifact = 0
+        self.sight = False
+        self.choice = False
 
 def take_ship_damage(ship):
     if ship['shield'] < 1:
@@ -92,135 +95,170 @@ def improve(ship):
     roll = random.random() * 100
 
     if(roll >= 99):
-        ship.sight = True
+        ship['sight'] = True
 
     elif(roll >= 95):
-        ship.speed += 1
+        ship['speed'] += 1
 
     elif(roll >= 90):
-        ship.storage += 2
+        ship['storage'] += 2
 
     elif(roll >= 80):
-        ship.health += 3
+        ship['health'] += 3
 
     elif(roll >= 60):
-        ship.ammo = (self.storage - self.energy)
+        ship['ammo'] = (ship['storage'] - ship['energy'])
 
     elif(roll >= 55):
-        ship.energy = (self.storage - self.ammo)
+        ship['energy'] = (ship['storage'] - ship['ammo'])
 
     elif(roll >= 50):
-        ship.shield = self.shield_max
+        ship['shield'] = ship['shield_max']
 
     elif(roll >= 40):
-        ship.storage += 1
+        ship['storage'] += 1
     else:
-        ship.fuel += 5
+        ship['fuel'] += 5
     return ship
 
 def find_wreckage(ship):
     roll = random.random() * 100
 
     if(roll >= 99):
-        ship.health += 3
-
+        ship['health'] += 3
+        ship['message'] = 'This was a medical vessel. It was carrying valuable supplies for maintaing a healthy crew'
     elif(roll >= 95):
-        ship.storage += 2
-
+        ship['storage'] += 2
+        ship['message'] = 'This was a transport vessel. You were able to extract hardware for attaching more cargo to your ship'
     elif(roll >= 90):
-        ship.speed += 1
-
+        ship['speed'] += 1
+        ship['message'] = 'This was a fast military vessel. You were able to extract thrusters to improve your ship\'s speed'
     elif(roll >= 80):
-        ship.ammo = (ship.storage - ship.energy)
-
+        ship['ammo'] = (ship['storage'] - ship['energy'])
+        ship['message'] = 'This ship was star harvester. You were able to obtain enough energy cells to fill your ship\'s cargo'
     elif(roll >= 60):
-         ship.energy = (ship.storage - ship.ammo)
-
+         ship['energy'] = (ship['storage'] - ship['ammo'])
+         ship['message'] = 'This was a heavy military vessel. You were able to obtain enough missiles to fill your ship\'s cargo'
     elif(roll >= 55):
-        ship.shield = ship.shield_max
-
+        ship['shield'] = ship['shield_max']
+        ship['message'] = 'The ship dissappeared as you approached '
     elif(roll >= 50):
-        ship.storage += 1
+        ship['storage'] += 1
+        ship['message'] = 'This was a merchant vessel, Your shields are at full charge'
+    elif(roll >= 45):
+        ship['combat'] = True
+        ship['message'] = 'An enemy ship ambushes you from behind the wreckage'
     else:
-        ship.fuel += 5
+        ship['fuel'] += 5
+        ship['message'] = 'This was a fuel tanker. Your fuel reserves increased by five '
     return ship
 
 def find_trading_post(ship):
-    ship.market = True
+    ship['market'] = True
     roll = random.random() * 100
 
     if(roll >= 99):
-        ship.purchase_option = 'artifact'
-
+        ship['purchase_option'] = 'artifact'
+        ship['message'] = 'Buy an artifact for 1 health?'
     elif(roll >= 90):
-        ship.purchase_option = 'speed'
-
+        ship['purchase_option'] = 'speed'
+        ship['message'] = 'Buy a speed upgrade for 1 health?'
     elif(roll >= 75):
-        ship.purchase_option = 'storage'
-
+        ship['purchase_option'] = 'storage'
+        ship['message'] = 'Buy a storage upgrade for 1 health?'
     elif(roll >= 60):
-        ship.purchase_option = 'missile'
-
+        ship['purchase_option'] = 'missile'
+        ship['message'] = 'Buy missiles for 1 health?'
     elif(roll >= 50):
-        ship.purchase_option = 'shield'
-
+        ship['purchase_option'] = 'shield'
+        ship['message'] = 'Buy a shield upgrade for 1 health?'
     else:
-        ship.purchase_option = 'battery'
+        ship['purchase_option'] = 'battery'
+        ship['message'] = 'Buy energy cell for 1 health?'
 
     return ship
 
+def find_merchant(ship):
+    ship['market'] = True
+    roll = random.random() * 100
+
+    if(roll >= 99):
+        ship['purchase_option'] = 'artifact'
+        ship['message'] = 'Buy an artifact for 1 health?'
+    elif(roll >= 90):
+        ship['purchase_option'] = 'storage'
+        ship['message'] = 'Buy a storage upgrade for 1 health?'
+    elif(roll >= 75):
+        ship['purchase_option'] = 'missile'
+        ship['message'] = 'Buy missiles for 1 health?'
+    elif(roll >= 60):
+        ship['purchase_option'] = 'battery'
+        ship['message'] = 'Buy energy cell for 1 health?'
+    elif(roll >= 45):
+        ship['purchase_option'] = 'shield'
+        ship['message'] = 'Buy a shield upgrade for 1 health?'
+    else:
+        ship['purchase_option'] = 'fuel'
+        ship['message'] = 'Buy 5 fuel for 1 health?'
+
+    return ship
+
+
 def purchase(ship):
-    if ship.purchase_option == 'artifact':
-        ship.health -= 1
-        ship.artifact += 1
-    elif ship.purchase_option == 'speed':
-        ship.health -= 1
-        ship.speed += 1
-    elif ship.purchase_option == 'storage':
-        ship.health -= 1
-        ship.storage += 1
-    elif ship.purchase_option == 'missile':
-        ship.health -= 1
-        ship.speed += 1
-    elif ship.purchase_option == 'shield':
-        ship.health -= 1
-        ship.shield += 1
-    elif ship.purchase_option == 'battery':
-        ship.health -= 1
-        ship.speed += 1
+    if ship['choice']:
+        if ship['purchase_option'] == 'artifact':
+            ship['health'] -= 1
+            ship['artifact'] += 1
+        elif ship['purchase_option'] == 'speed':
+            ship['health'] -= 1
+            ship['speed'] += 1
+        elif ship['purchase_option'] == 'storage':
+            ship['health'] -= 1
+            ship['storage'] += 1
+        elif ship['purchase_option'] == 'missile':
+            ship['health'] -= 1
+            ship['ammo'] += 1
+        elif ship['purchase_option'] == 'shield':
+            ship['health'] -= 1
+            ship['shield'] += 1
+        elif ship['purchase_option'] == 'battery':
+            ship['health'] -= 1
+            ship['energy'] += 1
     return ship
 
 def new_event(ship):
     roll = random.random() * 100
 
     if(roll >= 99):
-        # ship = improve(ship)
-        ship['message'] = 'improve'
+        ship = improve(ship)
+        ship['message'] = 'Your ship has received a free upgrade'
     elif(roll >= 95):
-        # ship = find_wreckage(ship)
-        ship['message'] = 'find wreckage'
+        ship = find_wreckage(ship)
+        ship['message'] = 'A destroyed vessel has been detected by your ship\'s sensors'
     elif(roll >= 90):
-         # ship = find_trading_post(ship)
-         ship['message'] = 'find trading post'
+         ship = find_trading_post(ship)
+         ship['message'] = 'Your navigator has identified a nearby trade station'
     elif(roll >= 80):
-        # ship = find_merchant(ship)
-        ship['message'] = 'find_merchant'
+        ship = find_merchant(ship)
+        ship['message'] = 'A merchant ship is broadcasting it\'s location near you.'
     elif(roll >= 60):
-        # ship = find_enemy(ship)
-        ship['message'] = 'enemy'
+        ship = find_enemy(ship)
+        ship['message'] = 'An enemy vessel approaches quickly'
     elif(roll >= 55):
         # ship = space_debris(ship)
-        ship['message'] = 'space debris'
+        ship['message'] = 'You have found yourself in the midst of an asteroid field. Take care to avoid damage.'
     elif(roll >= 50):
         # ship = illness(ship)
-        ship['message'] = 'illness'
+        ship['message'] = 'A crew member has become ill. This may cause adverse effects in times of duress'
     else:
         ship['message'] = 'Nothing of interest happened'
     return ship
 
 def find_enemy(ship):
     enemy = Ship(4,1,2,1,5,1,1,1,1,8, True)
-    return jsonify(enemy)
+    ship['enemy'] = enemy.__dict__
+    ship['combat'] = True
+    return ship
 
 
 @app.route('/create_player')
@@ -243,6 +281,14 @@ def move_ship_request():
     ship = move_ship(ship)
 
     return jsonify(ship)
+
+@app.route('/purchase', methods=['POST'])
+def purchase_confirm():
+    ship = request.get_json()
+    ship = purchase(ship)
+
+    return jsonify(ship)
+
 
 @app.route('/laser')
 def fire_laser(ship, target):
